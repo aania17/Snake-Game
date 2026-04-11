@@ -1,0 +1,17 @@
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\ai\AStarStrategy.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\ai\MoveStrategy.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\controller\AssetController.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\controller\CollisionController.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\controller\GameController.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\controller\InputHandler.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\controller\SoundController.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\database\DatabaseManager.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\main\Main.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\model\entity\Entity.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\model\entity\Player.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\model\GameState.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\model\object\OBJ_Bomb.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\model\object\OBJ_Food.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\model\object\SuperObject.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\view\GamePanel.java
+C:\Users\Aania\OneDrive\Desktop\snake-game\src\main\java\view\UI.java
