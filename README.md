@@ -1,6 +1,8 @@
 # 🐍 Viper
 
-A snake-style Java game built with Swing, featuring tile-based maps, A* AI pathfinding, SQLite score persistence, and a clean MVC architecture.
+Viper is a snake-style arcade game built entirely in Java using Swing. You control a snake navigating a tile-based map, collecting food to grow your score while dodging bombs that multiply as you get better. The game saves your high score locally using SQLite so your best run is always remembered across sessions.
+
+The project was built as a learning exercise in software architecture — specifically refactoring a working but monolithic game into a clean **MVC (Model-View-Controller)** structure, applying SOLID principles, and implementing classic design patterns in a real, running application.
 
 ---
 
@@ -20,10 +22,12 @@ A snake-style Java game built with Swing, featuring tile-based maps, A* AI pathf
 ## Gameplay
 
 - Navigate your snake around a tile-based map to collect **food** and earn points
-- Each food collected is worth **10 points**
-- Every **50 points**, an additional **bomb** spawns on the map
-- Hitting a bomb ends the game
-- Your **high score is saved** to a local SQLite database (`viper.db`) and persists across sessions
+- Each food item collected is worth **10 points**
+- Every **50 points**, an additional **bomb** spawns on the map — up to 9 at once
+- Hitting any bomb ends the game immediately
+- The map is made up of different tile types — some are walls or water that constrain where objects can spawn
+- Your **high score persists** across sessions, saved automatically to a local SQLite database (`viper.db`) on game over
+- On the title screen your all-time best is displayed so you always know what you're chasing
 
 ---
 
@@ -46,79 +50,90 @@ src/
 └── main/
     ├── java/
     │   ├── ai/
-    │   │   ├── AStarStrategy.java      # A* pathfinding implementation
-    │   │   └── MoveStrategy.java       # Strategy interface for movement
+    │   │   ├── AStarStrategy.java      # A* pathfinding (available for extension)
+    │   │   └── MoveStrategy.java       # Strategy interface for movement algorithms
     │   ├── controller/
-    │   │   ├── AssetController.java    # Spawns food and bombs
+    │   │   ├── AssetController.java    # Spawns and places food and bombs
     │   │   ├── CollisionController.java# Detects object and tile collisions
-    │   │   ├── GameController.java     # Core game loop logic
-    │   │   ├── InputHandler.java       # Keyboard input capture
-    │   │   └── SoundController.java    # Audio playback
+    │   │   ├── GameController.java     # Core game loop logic and state transitions
+    │   │   ├── InputHandler.java       # Captures keyboard input as boolean flags
+    │   │   └── SoundController.java    # Loads and plays .wav audio clips
     │   ├── database/
-    │   │   └── DatabaseManager.java    # SQLite persistence (Singleton)
+    │   │   └── DatabaseManager.java    # SQLite persistence — Singleton pattern
     │   ├── main/
-    │   │   └── Main.java               # Entry point — wires all layers
+    │   │   └── Main.java               # Entry point — wires all layers together
     │   ├── model/
-    │   │   ├── GameState.java          # Central game data (Subject/Observer)
+    │   │   ├── GameState.java          # Central game data — Observer pattern (Subject)
     │   │   ├── entity/
-    │   │   │   ├── Entity.java         # Base class for all entities
-    │   │   │   └── Player.java         # Player position, movement, sprites
+    │   │   │   ├── Entity.java         # Base class for all game entities
+    │   │   │   └── Player.java         # Player position, speed, direction, sprites
     │   │   └── object/
-    │   │       ├── SuperObject.java    # Base class for game objects
-    │   │       ├── OBJ_Food.java       # Collectible food item
+    │   │       ├── SuperObject.java    # Base class for all world objects
+    │   │       ├── OBJ_Food.java       # Collectible food — awards points on touch
     │   │       └── OBJ_Bomb.java       # Hazard — ends the game on contact
     │   ├── tile/
-    │   │   ├── Tile.java               # Tile data holder (image + collision flag)
-    │   │   └── TileManager.java        # Loads map file and draws tile grid
+    │   │   ├── Tile.java               # Data holder: tile image + collision flag
+    │   │   └── TileManager.java        # Loads map file, draws tile grid each frame
     │   └── view/
-    │       ├── GamePanel.java          # Renders game state each frame
-    │       └── UI.java                 # Title, HUD, and game over screens
+    │       ├── GamePanel.java          # Game loop + renders all game state each frame
+    │       └── UI.java                 # Title screen, HUD overlay, game over screen
     └── resources/
         └── assets/
-            ├── maps/map01              # Tile map definition file
-            ├── objects/                # food.png, bomb.png
-            ├── player/                 # Snake sprite sheets (8 directional frames)
-            ├── sound/                  # .wav audio files
-            └── tiles/                  # Tile images (grass, wall, water, etc.)
+            ├── maps/map01              # Tile map — space-separated grid of tile indices
+            ├── objects/                # bomb.png, food.png
+            ├── player/                 # Snake sprite sheets (8 directional frames × 2)
+            ├── sound/                  # .wav audio files for music and effects
+            └── tiles/                  # Tile images (grass, wall, water, earth, sand, tree)
 ```
 
 ---
 
 ## Architecture
 
-Viper follows strict **MVC (Model-View-Controller)** architecture with one-way dependencies:
+Viper follows strict **MVC (Model-View-Controller)** architecture with one-way, non-circular dependencies. This was the primary goal of the refactor — the original codebase had the View, Controller, and Model all importing each other freely, which caused compilation errors and made the code impossible to reason about.
 
 ```
 Main
- ├── creates → Model  (GameState, Player, SuperObject)
- ├── creates → Controllers  (GameController, AssetController, ...)
- └── creates → View  (GamePanel, UI)
+ ├── creates → Model      (GameState, Player, SuperObject[])
+ ├── creates → Controllers (GameController, AssetController, CollisionController, ...)
+ ├── creates → TileManager (tile layer — feeds mapLayout to GameController)
+ └── creates → View       (GamePanel, UI)
 
-Controller → reads/writes → Model
-View       → reads only  → Model
-Controller → never imports → View
+Controller  →  reads/writes  →  Model
+View        →  reads only    →  Model
+Controller  →  never imports →  View
 ```
 
-**Dependency flow is strictly one-directional.** The View never writes to the model, and the Controller never imports anything from the View layer. `Main.java` is the only class that knows about all three layers.
+`Main.java` is the only class that knows about all layers. It constructs everything and injects dependencies downward. No class ever reaches upward or sideways outside its own layer.
+
+### Layer Responsibilities
+
+| Layer | Classes | Responsibility |
+|-------|---------|----------------|
+| **Model** | `GameState`, `Player`, `Entity`, `SuperObject`, `OBJ_Food`, `OBJ_Bomb` | Store all game data. No rendering, no input, no logic. |
+| **Controller** | `GameController`, `AssetController`, `CollisionController`, `InputHandler`, `SoundController` | Update the model each tick. Never touch the View. |
+| **View** | `GamePanel`, `UI` | Read the model and draw it. Never write to the model. |
+| **Tile** | `TileManager`, `Tile` | Load and render the tile map. Provides `mapLayout` to controllers. |
+| **Database** | `DatabaseManager` | Persist and retrieve high scores via SQLite. |
 
 ### Audio Events
 
-| Event | Sound file |
-|-------|-----------|
-| Game start / retry | `BlueBoyAdventure.wav` (loops) |
+| Event | File |
+|-------|------|
+| New game / retry | `BlueBoyAdventure.wav` (loops continuously) |
 | Food collected | `eated.wav` |
 | Bomb hit | `gameover.wav` |
 
 ### Tile Types
 
-| Value in map file | Tile | Walkable |
-|---|---|---|
-| 0 | Grass | ✅ |
-| 1 | Wall | ❌ |
-| 2 | Water | ❌ |
-| 3 | Earth | ✅ |
-| 4 | Sand | ✅ |
-| 5 | Tree | ❌ |
+| Map value | Tile | Walkable | Objects spawn here |
+|-----------|------|----------|--------------------|
+| 0 | Grass | ✅ | ✅ |
+| 1 | Wall | ❌ | ❌ |
+| 2 | Water | ❌ | ❌ |
+| 3 | Earth | ✅ | ✅ |
+| 4 | Sand | ✅ | ✅ |
+| 5 | Tree | ❌ | ❌ |
 
 ---
 
@@ -126,25 +141,27 @@ Controller → never imports → View
 
 | Pattern | Where used | Purpose |
 |---------|-----------|---------|
-| **MVC** | Whole project | Separates rendering, logic, and data |
-| **Singleton** | `DatabaseManager` | One shared DB connection across the app |
-| **Observer** | `GameState` + `DatabaseManager` | Score changes notify listeners without tight coupling |
-| **Strategy** | `MoveStrategy` + `AStarStrategy` | Swappable movement algorithms (human/AI) |
-| **Factory** | `AssetController` | Centralises object creation (`OBJ_Food`, `OBJ_Bomb`) |
+| **MVC** | Whole project | Clean separation of rendering, logic, and data |
+| **Singleton** | `DatabaseManager` | One shared DB connection; prevents duplicate writes |
+| **Observer** | `GameState` (Subject) + `DatabaseManager` (Observer) | Score changes automatically notify listeners — no manual calls needed |
+| **Strategy** | `MoveStrategy` interface + `AStarStrategy` | Movement algorithm is swappable without changing any other class |
+| **Factory** | `AssetController` | Centralises object creation — no other class calls `new OBJ_Food()` directly |
 
 ### SOLID Principles Applied
 
-- **SRP** — Each class has one job: `GamePanel` only renders, `InputHandler` only captures keys, `CollisionController` only detects collisions
-- **OCP** — New entity types extend `Entity`; new movement strategies implement `MoveStrategy` — no existing classes need modification
-- **DIP** — `GameController` depends on `GameState` (abstraction), never on `GamePanel` (concrete View)
+| Principle | How |
+|-----------|-----|
+| **SRP** — Single Responsibility | Each class has exactly one job. `GamePanel` only renders. `InputHandler` only captures keys. `CollisionController` only checks collisions. `SoundController` only manages audio. |
+| **OCP** — Open/Closed | New entity types extend `Entity` without modifying it. New movement algorithms implement `MoveStrategy` without touching `GameController`. |
+| **DIP** — Dependency Inversion | `GameController` depends on `GameState` (the model abstraction), never on `GamePanel` (a concrete View class). All dependencies are injected via constructors in `Main`. |
 
 ---
 
 ## Prerequisites
 
-- **Java 17+** (uses records and switch expressions)
-- **Maven 3.6+**
-- No external server required — SQLite runs embedded
+- **Java 17+** — the codebase uses switch expressions and records
+- **Maven 3.6+** — for dependency management and building
+- No external server required — SQLite runs fully embedded
 
 ---
 
@@ -164,6 +181,8 @@ mvn clean package
 java -jar target/viper-1.0.jar
 ```
 
+The high score database (`viper.db`) is created automatically in the project root on first launch and updated on every game over.
+
 ---
 
 ## Dependencies
@@ -172,7 +191,7 @@ Add the following to your `pom.xml` if not already present:
 
 ```xml
 <dependencies>
-    <!-- SQLite JDBC driver for score persistence -->
+    <!-- SQLite JDBC driver for high score persistence -->
     <dependency>
         <groupId>org.xerial</groupId>
         <artifactId>sqlite-jdbc</artifactId>
@@ -183,10 +202,9 @@ Add the following to your `pom.xml` if not already present:
 <build>
     <resources>
         <resource>
+            <!-- Ensures assets (images, sounds, maps) are copied to classpath -->
             <directory>src/main/resources</directory>
         </resource>
     </resources>
 </build>
 ```
-
-The high score database (`viper.db`) is created automatically in the project root on first launch.
