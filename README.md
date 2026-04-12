@@ -1,6 +1,6 @@
-# 🐍 Viper
+# 🐍 Snake Game
 
-Viper is a snake-style arcade game built entirely in Java using Swing. You control a snake navigating a tile-based map, collecting food to grow your score while dodging bombs that multiply as you get better. The game saves your high score locally using SQLite so your best run is always remembered across sessions.
+A snake-style arcade game built entirely in Java using Swing. You control a snake navigating a tile-based map, collecting food to grow your score while dodging bombs that multiply as you get better. The game saves your high score locally using SQLite so your best run is always remembered across sessions.
 
 The project was built as a learning exercise in software architecture — specifically refactoring a working but monolithic game into a clean **MVC (Model-View-Controller)** structure, applying SOLID principles, and implementing classic design patterns in a real, running application.
 
