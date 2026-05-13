@@ -48,10 +48,7 @@ The project was built as a learning exercise in software architecture — specif
 ```
 src/
 └── main/
-    ├── java/
-    │   ├── ai/
-    │   │   ├── AStarStrategy.java      # A* pathfinding (available for extension)
-    │   │   └── MoveStrategy.java       # Strategy interface for movement algorithms
+    ├── java/   
     │   ├── controller/
     │   │   ├── AssetController.java    # Spawns and places food and bombs
     │   │   ├── CollisionController.java# Detects object and tile collisions
