@@ -1,4 +1,4 @@
-# 🐍 Snake Game
+# 🐍 Snake Game - OOAD Mini Project
 
 A snake-style arcade game built entirely in Java using Swing. You control a snake navigating a tile-based map, collecting food to grow your score while dodging bombs that multiply as you get better. The game saves your high score locally using SQLite so your best run is always remembered across sessions.
 
